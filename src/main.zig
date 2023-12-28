@@ -111,6 +111,18 @@ pub fn main() !void {
             }
         }
 
+        // Handle received messages
+        var it = client_list.iterator();
+
+        while (it.next()) |item| {
+            const socket = item.value_ptr;
+            const addr = item.key_ptr.*;
+            if (receiveMessage(socket)) |msg| {
+                std.log.info("{} said: {s}", .{
+                    addr.addr,
+                    msg[0 .. msg.len - 1],
+                });
+            }
         }
 
         std.time.sleep(1E9 * 0.1);
