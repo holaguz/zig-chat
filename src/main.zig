@@ -7,13 +7,21 @@ const AppParameters = struct {
 const Client = struct {
     socket: std.os.socket_t,
     addr: std.net.Address,
+
+    const HashMapKey = struct {
+        addr: std.net.Ip4Address,
+    };
+
+    pub fn key(self: Client) HashMapKey {
+        return HashMapKey{ .addr = self.addr.in };
+    }
 };
 
 var app_params = AppParameters{
     .port = 8080,
 };
 
-var client_list = std.ArrayHashMap(std.os.socket_t, std.os.socket_t){};
+var client_list: std.AutoArrayHashMap(Client.HashMapKey, std.os.socket_t) = undefined;
 
 pub fn parseArgs(args: [][:0]u8) !void {
     // TODO: Crash on unknown args, print usage, etc
@@ -72,11 +80,21 @@ pub fn main() !void {
     // If we don't kill the clients the server socket will linger on
     defer killClients();
 
+    client_list = std.AutoArrayHashMap(Client.HashMapKey, std.os.socket_t).init(allocator);
+
     while (true) {
-        if (acceptClient(serverSocket)) |c| {
-            std.log.info("Accepted new client: {}\n", .{c.addr.in});
+        while (acceptClient(serverSocket)) |c| {
+            std.log.info("Accepted new client: {}", .{c.addr.in});
+
+            client_list.put(c.key(), c.socket) catch |err| {
+                std.log.err("Couldn't store client: {any}\n", .{err});
+            };
         } else |err| {
-            std.log.err("Error accepting client: {any}\n", .{err});
+            if (err != error.WouldBlock) {
+                std.log.err("Error accepting client: {any}\n", .{err});
+            }
+        }
+
         }
 
         std.time.sleep(1E9 * 0.1);
