@@ -1,0 +1,26 @@
+name: build
+on: push
+
+jobs:
+  linux:
+    name: ${{matrix.tag}}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          install: true
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2.1.1
+        with:
+          version: master
+
+      - name: Build
+        run: |
+          zig build
