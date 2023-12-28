@@ -35,7 +35,7 @@ pub fn parseArgs(args: [][:0]u8) !void {
 }
 
 pub fn startServer() !std.os.socket_t {
-    const socket = try std.os.socket(std.os.AF.INET, std.os.SOCK.STREAM, 0);
+    const socket = try std.os.socket(std.os.AF.INET, std.os.SOCK.STREAM | std.os.SOCK.NONBLOCK, 0);
     const address = std.net.Address.initIp4(.{ 0, 0, 0, 0 }, app_params.port);
     const len = address.getOsSockLen();
     try std.os.bind(socket, &address.any, len);
