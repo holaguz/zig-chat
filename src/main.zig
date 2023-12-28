@@ -64,6 +64,22 @@ pub fn killClients() void {
     // TODO
 }
 
+pub fn receiveMessage(client_socket: *std.os.socket_t) ?[]u8 {
+    var buffer: [256]u8 = undefined;
+    const received = std.os.recv(client_socket.*, &buffer, 0) catch |err| {
+        if (err != error.WouldBlock) {
+            std.log.err("Error receiving message: {any}\n", .{err});
+        }
+        return null;
+    };
+
+    if (received == 0) {
+        return null;
+    }
+
+    return buffer[0..received];
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
