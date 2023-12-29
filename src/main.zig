@@ -21,8 +21,6 @@ var app_params = AppParameters{
     .port = 8080,
 };
 
-var client_list: std.AutoArrayHashMap(Client.HashMapKey, std.os.socket_t) = undefined;
-
 pub fn parseArgs(args: [][:0]u8) !void {
     // TODO: Crash on unknown args, print usage, etc
     const argc = args.len;
@@ -96,7 +94,11 @@ pub fn main() !void {
     // If we don't kill the clients the server socket will linger on
     defer killClients();
 
-    client_list = std.AutoArrayHashMap(Client.HashMapKey, std.os.socket_t).init(allocator);
+    var client_list = std.AutoArrayHashMap(Client.HashMapKey, std.os.socket_t).init(allocator);
+    defer client_list.deinit();
+
+    const buffer = try allocator.alloc(u8, 1024);
+    defer allocator.free(buffer);
 
     while (true) {
         while (acceptClient(serverSocket)) |c| {
