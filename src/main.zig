@@ -62,9 +62,19 @@ pub fn killClients() void {
     // TODO
 }
 
-pub fn receiveMessage(client_socket: *std.os.socket_t) ?[]u8 {
-    var buffer: [256]u8 = undefined;
-    const received = std.os.recv(client_socket.*, &buffer, 0) catch |err| {
+pub fn broadcastMessage(sender: std.os.socket_t, clients: []std.os.socket_t, msg: []const u8) !void {
+    for (clients) |client| {
+        if (client == sender) {
+            continue;
+        }
+        _ = std.os.send(client, msg, 0) catch |err| {
+            std.log.err("Error sending message: {any}", .{err});
+        };
+    }
+}
+
+pub fn receiveMessage(client_socket: *std.os.socket_t, buffer: []u8) ?[]const u8 {
+    const received = std.os.recv(client_socket.*, buffer, 0) catch |err| {
         if (err != error.WouldBlock) {
             std.log.err("Error receiving message: {any}\n", .{err});
         }
