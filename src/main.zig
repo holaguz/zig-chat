@@ -73,8 +73,8 @@ pub fn broadcastMessage(sender: std.os.socket_t, clients: []std.os.socket_t, msg
     }
 }
 
-pub fn receiveMessage(client_socket: *std.os.socket_t, buffer: []u8) ?[]const u8 {
-    const received = std.os.recv(client_socket.*, buffer, 0) catch |err| {
+pub fn receiveMessage(client_socket: std.os.socket_t, buffer: []u8) ?[]const u8 {
+    const received = std.os.recv(client_socket, buffer, 0) catch |err| {
         if (err != error.WouldBlock) {
             std.log.err("Error receiving message: {any}\n", .{err});
         }
@@ -127,9 +127,9 @@ pub fn main() !void {
         var it = client_list.iterator();
 
         while (it.next()) |item| {
-            const socket = item.value_ptr;
+            const socket = item.value_ptr.*;
             const addr = item.key_ptr.*;
-            if (receiveMessage(socket)) |msg| {
+            if (receiveMessage(socket, buffer)) |msg| {
                 std.log.info("{} said: {s}", .{
                     addr.addr,
                     msg[0 .. msg.len - 1],
