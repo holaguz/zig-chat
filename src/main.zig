@@ -127,13 +127,15 @@ pub fn main() !void {
         var it = client_list.iterator();
 
         while (it.next()) |item| {
-            const socket = item.value_ptr.*;
-            const addr = item.key_ptr.*;
-            if (receiveMessage(socket, buffer)) |msg| {
-                std.log.info("{} said: {s}", .{
-                    addr.addr,
-                    msg[0 .. msg.len - 1],
-                });
+            const sender_socket = item.value_ptr.*;
+            const sender_addr = item.key_ptr.*;
+            if (receiveMessage(sender_socket, buffer)) |msg| {
+                var prettyBuffer: [1024:0]u8 = undefined;
+
+                const prettyMsg = try std.fmt.bufPrintZ(&prettyBuffer, "{} said: {s}", .{ sender_addr.addr, msg });
+
+                std.log.info("{s}", .{prettyMsg});
+                try broadcastMessage(sender_socket, client_list.values(), prettyMsg);
             }
         }
 
